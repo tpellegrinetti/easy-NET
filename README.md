@@ -1,5 +1,5 @@
 # easy-NET
-
+![Alt text](easy-NET.jpg)
 easyNET is a user-friendly script designed to streamline the process of constructing microbial networks using SparCC (Sparse Correlations for Compositional data). This tool simplifies the workflow for analyzing compositional datasets and generating correlation-based microbial interaction networks, making it accessible for researchers without extensive programming expertise.
 
 ## Features:
