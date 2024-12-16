@@ -26,7 +26,7 @@ Generates p-value files to identify significant interactions.
 ##
 # How to Use:
 ### Clone this repository:
-git clone https://github.com/tpellegrinetti/easyNET.git
+git clone https://github.com/tpellegrinetti/easy-NET.git
 ##
 ### Install the script and activate conda:
 bash install.sh
