@@ -23,19 +23,28 @@ Generates p-value files to identify significant interactions.
 ### Simplicity: Designed for researchers who need an efficient and straightforward way to create microbial networks.
 ### Automation: Handles complex SparCC workflows automatically, saving time and effort.
 ### Customization: Flexible options for input data filtering and network parameters.
-
+##
 # How to Use:
 ### Clone this repository:
 git clone https://github.com/tpellegrinetti/easyNET.git
-
+##
 ### Install the script and activate conda:
 bash install.sh
-
+##
 ### Activate script
 conda activate easy-NET
+##
+###Adding Tables
+#####Create Tables for Your Treatments and OTUs
+#####To proceed, you need to prepare OTU tables specific to each treatment in your study.
+##
+#####Example: If your dataset contains three treatments, you will need to create a separate OTU table for each treatment: T1.txt, T2.txt, and T3.txt.
+#####Each OTU table should only include the samples that correspond to the respective treatment.
+#####Ensure that the OTU tables are correctly formatted and include all relevant samples for accurate analysis.
+##
 ### Run the script
 ./easy-NET.sh -n <absolute_cutoff> -a <relative_cutoff> -d <data_directory>
-
+##
 # Dependencies:
 Python 2.7 (for compatibility with SparCC)
 SparCC: Ensure SparCC is installed and accessible in your system path. (https://github.com/bio-developer/sparcc)
