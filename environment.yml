@@ -1,0 +1,8 @@
+name: easy-NET
+channels:
+  - conda-forge
+dependencies:
+  - numpy=1.10.4
+  - pandas=0.17.0
+  - python=2.7.12
+  - scipy=0.17.1
