@@ -29,11 +29,12 @@ Generates p-value files to identify significant interactions.
 git clone https://github.com/username/easyNET.git
 
 ### Install the script and activate conda:
-conda env create -f environment.yml
-conda activate easy-NET
+bash install.sh
 
+### Activate script
+conda activate easy-NET
 ### Run the script
-./easyNET.sh -n <absolute_cutoff> -a <relative_cutoff> -d <data_directory>
+./easy-NET.sh -n <absolute_cutoff> -a <relative_cutoff> -d <data_directory>
 
 # Dependencies:
 Python 2.7 (for compatibility with SparCC)
