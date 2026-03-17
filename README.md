@@ -1,6 +1,8 @@
 # easy-NET
 
-![easy-NET logo](easy-NET.jpg)
+<p align="center">
+  <img src="easy-NET.jpg" width="300"/>
+</p>
 
 **easy-NET** is a bash pipeline for constructing microbial co-occurrence networks using [SparCC](https://github.com/bio-developer/sparcc) (Sparse Correlations for Compositional data). It automates the full workflow — from ASV table filtering to correlation network generation and significance testing — making it accessible to researchers without extensive bioinformatics experience.
 
