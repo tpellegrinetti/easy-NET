@@ -1,51 +1,130 @@
 # easy-NET
-![Alt text](easy-NET.jpg)
-easyNET is a user-friendly script designed to streamline the process of constructing microbial networks using SparCC (Sparse Correlations for Compositional data). This tool simplifies the workflow for analyzing compositional datasets and generating correlation-based microbial interaction networks, making it accessible for researchers without extensive programming expertise.
-##
-## Features:
-### Data Filtering: Automatically filters input datasets based on absolute or relative abundance thresholds.
-Automated Network Creation: Generates SparCC correlation networks with minimal user input.
-### Bootstrap Analysis: Incorporates SparCC bootstrapping to assess the robustness of correlations.
-Significance Testing: Computes p-values for network edges using permutation-based tests.
-### Customizable Parameters: Allows users to set thresholds and specify directories for input and output data.
-##
-## Workflow:
-### Input Processing: Reads tab-delimited .txt files containing microbial abundance data.
-### Filtering: Removes rows based on user-defined abundance thresholds.
-##
-## Network Generation:
-Calculates SparCC correlations.
-Creates bootstrapped permutations for significance testing.
-Generates p-value files to identify significant interactions.
-### Output: Saves networks and significant edges in organized directories for easy interpretation.
-##
-## Why Use easyNET?
-### Simplicity: Designed for researchers who need an efficient and straightforward way to create microbial networks.
-### Automation: Handles complex SparCC workflows automatically, saving time and effort.
-### Customization: Flexible options for input data filtering and network parameters.
-##
-# How to Use:
-### Clone this repository:
+
+![easy-NET logo](easy-NET.jpg)
+
+**easy-NET** is a bash pipeline for constructing microbial co-occurrence networks using [SparCC](https://github.com/bio-developer/sparcc) (Sparse Correlations for Compositional data). It automates the full workflow — from ASV table filtering to correlation network generation and significance testing — making it accessible to researchers without extensive bioinformatics experience.
+
+---
+
+## Features
+
+- **Flexible filtering**: filter ASV tables by absolute read count (`-n`), relative abundance (`-ab`), or let the script find the optimal cutoff automatically (`--auto`)
+- **Automated network construction**: runs SparCC correlations for all `.txt` tables in a folder
+- **Bootstrap analysis**: generates 100 permutations to assess correlation robustness
+- **Significance testing**: computes two-sided pseudo p-values via permutation-based tests
+- **Batch processing**: handles multiple tables in a single run, organizing outputs per table
+
+---
+
+## Requirements
+
+- **Python 2.7** (required for SparCC compatibility)
+- **SparCC** — install from [https://github.com/bio-developer/sparcc](https://github.com/bio-developer/sparcc)
+- **conda** (recommended for environment management)
+
+---
+
+## Installation
+
+Clone the repository:
+```bash
 git clone https://github.com/tpellegrinetti/easy-NET.git
-##
-### Install the script and activate conda:
+cd easy-NET
+```
+
+Install and activate the conda environment:
+```bash
 bash install.sh
-##
-### Activate script
 conda activate easy-NET
-##
-### Adding Tables
-##### Create Tables for Your Treatments and OTUs
-##### To proceed, you need to prepare OTU tables specific to each treatment in your study.
-##
-##### Example: If your dataset contains three treatments, you will need to create a separate OTU table for each treatment: T1.txt, T2.txt, and T3.txt.
-##### Each OTU table should only include the samples that correspond to the respective treatment.
-##### Ensure that the OTU tables are correctly formatted and include all relevant samples for accurate analysis.
-##
-### Run the script
-./easy-NET.sh -n <absolute_cutoff> -a <relative_cutoff> -d <data_directory>
-##
-# Dependencies:
-Python 2.7 (for compatibility with SparCC)
-SparCC: Ensure SparCC is installed and accessible in your system path. (https://github.com/bio-developer/sparcc)
-With easyNET, you can focus on interpreting your results rather than troubleshooting complex pipelines. Simplify your microbial network analysis today!
+```
+
+---
+
+## Input Format
+
+easy-NET expects tab-delimited `.txt` files with ASVs/OTUs in rows and samples in columns. Prepare one table per treatment or group of interest.
+
+**Example:** if your experiment has three treatments, prepare:
+```
+data/
+├── T1.txt
+├── T2.txt
+└── T3.txt
+```
+
+Each file should contain only the samples belonging to that treatment.
+
+---
+
+## Usage
+```bash
+bash easy_net.sh -d <folder> -s <sparcc_path> [--auto] [-n <min_reads>] [-ab <min_rel_abund_%>]
+```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `-d <folder>` | Folder containing `.txt` ASV tables **(required)** |
+| `-s <path>` | Path to the SparCC directory **(required)** |
+| `--auto` | Automatically find the lowest cutoff keeping all tables < 1000 ASVs |
+| `-n <int>` | Minimum absolute read count per ASV per sample |
+| `-ab <float>` | Minimum relative abundance in % per sample (e.g. `0.1` = 0.1%) |
+| `-h` | Show help message |
+
+### Examples
+```bash
+# Automatic cutoff detection
+bash easy_net.sh -d ./data -s /opt/SparCC --auto
+
+# Filter by minimum read count
+bash easy_net.sh -d ./data -s /opt/SparCC -n 100
+
+# Filter by relative abundance
+bash easy_net.sh -d ./data -s /opt/SparCC -ab 0.01
+
+# Combine filters
+bash easy_net.sh -d ./data -s /opt/SparCC -n 5 -ab 0.05
+```
+
+---
+
+## Output
+
+For each input table, easy-NET creates a `<table>_net/` directory containing:
+```
+T1_net/
+├── cor_sparcc.out         # SparCC correlation matrix
+├── pvals_two_sided.txt    # Two-sided pseudo p-values
+├── perm/                  # 100 permuted tables
+└── pvalues/               # SparCC correlations for each permutation
+```
+
+Filtered tables are saved in `<input_folder>/filtered/`.
+
+---
+
+## Workflow Overview
+```
+.txt tables → Filtering → SparCC correlations
+                              ↓
+                      Bootstrap permutations (n=100)
+                              ↓
+                      Pseudo p-value computation
+                              ↓
+                      Significant pair extraction
+```
+
+---
+
+## Citation
+
+If you use easy-NET in your research, please cite SparCC:
+
+> Friedman J, Alm EJ (2012). Inferring Correlation Networks from Genomic Survey Data. *PLOS Computational Biology* 8(9): e1002687.
+
+---
+
+## License
+
+MIT License. See `LICENSE` for details.
