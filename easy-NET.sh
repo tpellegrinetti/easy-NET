@@ -1,46 +1,46 @@
 #!/bin/bash
 
 # =============================================================================
-# easy_net.sh — Pipeline SparCC com filtragem por soma de repetições
+# easy_net.sh — SparCC Pipeline with sum-of-replicates filtering
 # =============================================================================
-# Uso:
-#   bash easy_net.sh -d <pasta> [--abs | --abr] [-n <soma>] [-ab <pct>]
+# Usage:
+#   bash easy_net.sh -d <folder> [--abs | --abr] [-n <sum>] [-ab <pct>]
 #
-# Modos de filtragem automática (escolha um):
-#   --abs    Varredura automática por soma absoluta de reads (1 a 10000, passo 1)
-#            Seleciona o menor cutoff que deixa <= 999 ASVs em todos os tratamentos
-#   --abr    Varredura automática por abundância relativa (0.0001% a 1%, passo 0.0001%)
-#            Seleciona o menor cutoff % que deixa <= 999 ASVs em todos os tratamentos
+# Automatic filtering modes (choose one):
+#   --abs    Automatic sweep by absolute read sum (1 to 10000, step 1)
+#            Selects the lowest cutoff that leaves <= 999 ASVs in all treatments
+#   --abr    Automatic sweep by relative abundance (0.0001% to 1%, step 0.0001%)
+#            Selects the lowest cutoff % that leaves <= 999 ASVs in all treatments
 #
-# Modos manuais (sem varredura):
-#   -n  <int>      Soma absoluta mínima de reads por ASV (ex: -n 150)
-#   -ab <float>    Abundância relativa mínima em % por ASV (ex: -ab 0.05)
+# Manual modes (no sweep):
+#   -n  <int>      Minimum absolute read sum per ASV (e.g., -n 150)
+#   -ab <float>    Minimum relative abundance in % per ASV (e.g., -ab 0.05)
 #
-# Outros:
-#   -d  <pasta>    Pasta contendo os arquivos .txt (obrigatório)
-#   -h             Exibe esta ajuda
+# Other:
+#   -d  <folder>   Folder containing .txt files (required)
+#   -h             Display this help
 #
-# Lógica de filtragem:
-#   Cada ASV é avaliado pela SOMA de todas as suas repetições (colunas).
-#   O mesmo cutoff é aplicado a todos os tratamentos, garantindo comparabilidade.
-#   Ao final, o script informa quantos ASVs (%) foram mantidos por tratamento.
+# Filtering logic:
+#   Each ASV is evaluated by the SUM of all its replicates (columns).
+#   The same cutoff is applied to all treatments, ensuring comparability.
+#   At the end, the script reports how many ASVs (%) were retained per treatment.
 #
-# Exemplos:
-#   bash easy_net.sh -d ./dados --abs
-#   bash easy_net.sh -d ./dados --abr
-#   bash easy_net.sh -d ./dados -n 150
-#   bash easy_net.sh -d ./dados -ab 0.02
+# Examples:
+#   bash easy_net.sh -d ./data --abs
+#   bash easy_net.sh -d ./data --abr
+#   bash easy_net.sh -d ./data -n 150
+#   bash easy_net.sh -d ./data -ab 0.02
 #
-# Notas:
-#   - O SparCC deve estar em: /Dados/bioinformatic_tools/SparCC
+# Notes:
+#   - SparCC should be in: /Dados/bioinformatic_tools/SparCC
 # =============================================================================
 
-SPARCC_PATH="/home/thierry_bioinfo/works/bioinformatics_tools/SparCC/" ####CHANGE HERE YORUR SPARCC PATH
+SPARCC_PATH="/home/thierry_bioinfo/works/bioinformatics_tools/SparCC/" ####CHANGE HERE YOUR SPARCC PATH
 
-log_info()    { echo "[INFO]  $*"; }
-log_ok()      { echo "[OK]    $*"; }
-log_warn()    { echo "[AVISO] $*"; }
-log_error()   { echo "[ERRO]  $*"; }
+log_info()    { echo "[INFO]    $*"; }
+log_ok()      { echo "[OK]      $*"; }
+log_warn()    { echo "[WARNING] $*"; }
+log_error()   { echo "[ERROR]   $*"; }
 log_step()    { echo ""; echo ">>> $*"; }
 
 # --- Defaults ---
@@ -57,44 +57,44 @@ min_ab_pct=""
 usage() {
 cat <<EOF
 
-easy_net.sh — Pipeline SparCC com filtragem por soma de repetições
+easy_net.sh — SparCC Pipeline with sum-of-replicates filtering
 
-USO:
-  bash easy_net.sh -d <pasta> [--abs | --abr | -n <soma> | -ab <pct>]
+USAGE:
+  bash easy_net.sh -d <folder> [--abs | --abr | -n <sum> | -ab <pct>]
 
-OPCOES OBRIGATORIAS:
-  -d  <pasta>    Pasta contendo os arquivos .txt
+REQUIRED OPTIONS:
+  -d  <folder>    Folder containing .txt files
 
-MODOS DE FILTRAGEM AUTOMATICA (varredura, escolha um):
-  --abs          Varredura de soma absoluta: 1 a 10000 (passo 1)
-                 Seleciona o menor cutoff com <= ${max_asv} ASVs em todos os tratamentos
-  --abr          Varredura de abundancia relativa: 0.0001% a 1% (passo 0.0001%)
-                 Seleciona o menor cutoff % com <= ${max_asv} ASVs em todos os tratamentos
+AUTOMATIC FILTERING MODES (sweep, choose one):
+  --abs          Absolute sum sweep: 1 to 10000 (step 1)
+                 Selects the lowest cutoff with <= ${max_asv} ASVs in all treatments
+  --abr          Relative abundance sweep: 0.0001% to 1% (step 0.0001%)
+                 Selects the lowest cutoff % with <= ${max_asv} ASVs in all treatments
 
-MODOS MANUAIS (sem varredura):
-  -n  <int>      Soma absoluta minima de reads por ASV (ex: -n 150)
-  -ab <float>    Abundancia relativa minima em % por ASV (ex: -ab 0.02)
+MANUAL MODES (no sweep):
+  -n  <int>      Minimum absolute read sum per ASV (e.g., -n 150)
+  -ab <float>    Minimum relative abundance in % per ASV (e.g., -ab 0.02)
 
-OUTROS:
-  -h             Exibe esta ajuda
+OTHER:
+  -h             Display this help
 
-EXEMPLOS:
-  bash easy_net.sh -d ./dados --abs
-  bash easy_net.sh -d ./dados --abr
-  bash easy_net.sh -d ./dados -n 150
-  bash easy_net.sh -d ./dados -ab 0.02
+EXAMPLES:
+  bash easy_net.sh -d ./data --abs
+  bash easy_net.sh -d ./data --abr
+  bash easy_net.sh -d ./data -n 150
+  bash easy_net.sh -d ./data -ab 0.02
 
-NOTAS:
-  - O filtro e aplicado sobre a SOMA de todas as repeticoes de cada ASV.
-  - O mesmo cutoff e usado em todos os tratamentos (comparabilidade garantida).
-  - Para --abr: abundancia relativa = soma_ASV / soma_total_tratamento * 100
-  - SparCC esperado em: ${SPARCC_PATH}
+NOTES:
+  - The filter is applied over the SUM of all replicates of each ASV.
+  - The same cutoff is used in all treatments (comparability guaranteed).
+  - For --abr: relative abundance = ASV_sum / total_treatment_sum * 100
+  - SparCC expected in: ${SPARCC_PATH}
 
 EOF
 }
 
 # =============================================================================
-# Parse de argumentos
+# Argument parsing
 # =============================================================================
 ARGS=("$@")
 i=0
@@ -114,30 +114,30 @@ while [ $i -lt ${#ARGS[@]} ]; do
         -h|--help)
             usage; exit 0 ;;
         *)
-            log_error "Opção desconhecida: $arg"
+            log_error "Unknown option: $arg"
             usage; exit 1 ;;
     esac
     i=$((i+1))
 done
 
-# Validar: --abs e --abr são mutuamente exclusivos
+# Validate: --abs and --abr are mutually exclusive
 if $mode_abs && $mode_abr; then
-    log_error "--abs e --abr são mutuamente exclusivos. Escolha apenas um."
+    log_error "--abs and --abr are mutually exclusive. Choose only one."
     usage
     exit 1
 fi
 
 # =============================================================================
-# Validações iniciais
+# Initial validations
 # =============================================================================
 if [ -z "$folder" ]; then
-    log_error "A pasta de entrada é obrigatória. Use -d <pasta>."
+    log_error "Input folder is required. Use -d <folder>."
     usage
     exit 1
 fi
 
 if [ ! -d "$folder" ]; then
-    log_error "Pasta não encontrada: $folder"
+    log_error "Folder not found: $folder"
     exit 1
 fi
 
@@ -145,49 +145,49 @@ shopt -s nullglob
 txt_files=("${folder}"/*.txt)
 shopt -u nullglob
 if [ ${#txt_files[@]} -eq 0 ]; then
-    log_error "Nenhum arquivo .txt encontrado em: $folder"
+    log_error "No .txt files found in: $folder"
     exit 1
 fi
 
 if [ ! -d "$SPARCC_PATH" ]; then
-    log_error "SparCC não encontrado em: $SPARCC_PATH"
+    log_error "SparCC not found in: $SPARCC_PATH"
     exit 1
 fi
 
 # =============================================================================
-# Patch automático em get_significant_pairs.py (adiciona delimiter='\t')
-# Necessário porque genfromtxt sem delimiter falha com campos vazios entre tabs
+# Automatic patch in get_significant_pairs.py (adds delimiter='\t')
+# Necessary because genfromtxt without delimiter fails with empty fields between tabs
 # =============================================================================
 patch_get_significant_pairs() {
     local script="${SPARCC_PATH}/get_significant_pairs.py"
 
     if grep -q "delimiter='\\\\t'" "$script" 2>/dev/null; then
-        log_info "get_significant_pairs.py já está patcheado (delimiter='\\t'). Pulando."
+        log_info "get_significant_pairs.py is already patched (delimiter='\\t'). Skipping."
         return 0
     fi
 
-    # Faz backup na primeira vez
+    # Make backup on first run
     if [ ! -f "${script}.bak" ]; then
         cp "$script" "${script}.bak"
-        log_info "Backup criado: ${script}.bak"
+        log_info "Backup created: ${script}.bak"
     fi
 
-    # Substitui a linha do genfromtxt adicionando delimiter='\t'
+    # Replace the genfromtxt line by adding delimiter='\t'
     sed -i "s/genfromtxt(path, names=True/genfromtxt(path, delimiter='\\t', names=True/" "$script"
 
     if grep -q "delimiter='\\\\t'" "$script"; then
-        log_ok "Patch aplicado em get_significant_pairs.py (delimiter='\\t' adicionado)"
+        log_ok "Patch applied to get_significant_pairs.py (delimiter='\\t' added)"
     else
-        log_warn "Patch automático falhou — verifique manualmente a linha 13 de get_significant_pairs.py"
+        log_warn "Automatic patch failed — manually check line 13 of get_significant_pairs.py"
     fi
 }
 
 # =============================================================================
-# Função: checar se cor_sparcc.out tem dados reais (não só tabs)
+# Function: check if cor_sparcc.out has real data (not just tabs)
 # =============================================================================
 check_cor_file() {
     local cor_file=$1
-    # Se o arquivo não tem nenhum dígito, está vazio
+    # If the file has no digits, it's empty
     if ! grep -qP '\d' "$cor_file" 2>/dev/null; then
         return 1
     fi
@@ -195,27 +195,27 @@ check_cor_file() {
 }
 
 # =============================================================================
-# Função: contar ASVs mantidos pelo filtro de soma absoluta mínima
-# Um ASV é mantido se a SOMA de todas as suas repetições >= min_soma
+# Function: count ASVs retained by minimum absolute sum filter
+# An ASV is retained if the SUM of all its replicates >= min_sum
 # =============================================================================
 count_asvs_by_sum() {
     local file=$1
-    local min_soma=$2
+    local min_suma=$2
 
-    awk -F'\t' -v min_soma="$min_soma" '
+    awk -F'\t' -v min_suma="$min_suma" '
     NR==1 { next }
     {
-        soma=0
-        for (i=2; i<=NF; i++) soma += $i+0
-        if (soma >= min_soma) count++
+        suma=0
+        for (i=2; i<=NF; i++) suma += $i+0
+        if (suma >= min_suma) count++
     }
     END { print count+0 }
     ' "$file"
 }
 
 # =============================================================================
-# Função: contar ASVs mantidos pelo filtro de soma relativa (% da soma total)
-# A soma do ASV deve representar >= min_pct % da soma total do tratamento
+# Function: count ASVs retained by relative sum filter (% of total sum)
+# The ASV sum must represent >= min_pct % of the treatment's total sum
 # =============================================================================
 count_asvs_by_sum_rel() {
     local file=$1
@@ -224,14 +224,14 @@ count_asvs_by_sum_rel() {
     awk -F'\t' -v min_pct="$min_pct" '
     NR==1 { next }
     {
-        soma=0
-        for (i=2; i<=NF; i++) soma += $i+0
-        total += soma
-        somas[NR] = soma
+        suma=0
+        for (i=2; i<=NF; i++) suma += $i+0
+        total += suma
+        sumas[NR] = suma
     }
     END {
-        for (r in somas) {
-            if (total > 0 && (somas[r]/total)*100 >= min_pct) count++
+        for (r in sumas) {
+            if (total > 0 && (sumas[r]/total)*100 >= min_pct) count++
         }
         print count+0
     }
@@ -239,8 +239,8 @@ count_asvs_by_sum_rel() {
 }
 
 # =============================================================================
-# Função: filtrar arquivo por soma e gravar na pasta filtered/
-# Modos: abs (soma absoluta), rel (% individual), rel_acum (% acumulada)
+# Function: filter file by sum and save to filtered/ folder
+# Modes: abs (absolute sum), rel (individual %), rel_acum (cumulative %)
 # =============================================================================
 filter_file() {
     local file=$1
@@ -249,28 +249,28 @@ filter_file() {
     local cutoff=$4
 
     if [ "$mode" = "rel" ]; then
-        # Manter ASVs cuja % individual >= cutoff
+        # Keep ASVs whose individual % >= cutoff
         awk -F'\t' -v min_pct="$cutoff" '
         NR==1 { header=$0; next }
         {
-            soma=0
-            for (i=2; i<=NF; i++) soma += $i+0
-            total += soma
-            somas[NR] = soma
+            suma=0
+            for (i=2; i<=NF; i++) suma += $i+0
+            total += suma
+            sumas[NR] = suma
             lines[NR] = $0
         }
         END {
             print header
             for (r=2; r<=NR; r++) {
-                if (r in somas && total > 0 && (somas[r]/total)*100 >= min_pct)
+                if (r in sumas && total > 0 && (sumas[r]/total)*100 >= min_pct)
                     print lines[r]
             }
         }
         ' "$file" > "$out"
 
     elif [ "$mode" = "rel_acum" ]; then
-        # Manter os top N ASVs (por % decrescente) que cobrem >= cutoff% acumulado
-        # Usa Python para ordenar por % e selecionar as linhas corretas
+        # Keep top N ASVs (by decreasing %) that cover >= cutoff% cumulative
+        # Uses Python to sort by % and select the correct lines
         python3 - "$file" "$out" "$cutoff" << 'PYEOF'
 import sys
 
@@ -284,19 +284,19 @@ with open(fpath) as fh:
         s = sum(float(x) for x in parts[1:] if x.strip())
         rows.append((s, line))
 
-soma_total = sum(r[0] for r in rows)
+suma_total = sum(r[0] for r in rows)
 
-# Ordenar por soma decrescente, acumular %, parar ao atingir cutoff
+# Sort by decreasing sum, accumulate %, stop when reaching cutoff
 rows_sorted = sorted(rows, key=lambda x: x[0], reverse=True)
 keep = set()
 acum = 0.0
 for i, (s, line) in enumerate(rows_sorted):
     keep.add(i)
-    acum += (s / soma_total * 100) if soma_total > 0 else 0
+    acum += (s / suma_total * 100) if suma_total > 0 else 0
     if acum >= cutoff:
         break
 
-# Gravar mantendo a ordem original do arquivo
+# Write maintaining the original file order
 with open(outpath, 'w') as fout:
     fout.write(header)
     for i, (s, line) in enumerate(rows_sorted):
@@ -305,20 +305,20 @@ with open(outpath, 'w') as fout:
 PYEOF
 
     else
-        # Modo abs: manter ASVs com soma >= cutoff
-        awk -F'\t' -v min_soma="$cutoff" '
+        # abs mode: keep ASVs with sum >= cutoff
+        awk -F'\t' -v min_suma="$cutoff" '
         NR==1 { print; next }
         {
-            soma=0
-            for (i=2; i<=NF; i++) soma += $i+0
-            if (soma >= min_soma) print
+            suma=0
+            for (i=2; i<=NF; i++) suma += $i+0
+            if (suma >= min_suma) print
         }
         ' "$file" > "$out"
     fi
 }
 
 # =============================================================================
-# Função: perfil estatístico de um arquivo (ASVs, soma total, min, max por ASV)
+# Function: statistical profile of a file (ASVs, total sum, min, max per ASV)
 # =============================================================================
 print_treatment_profile() {
     local file=$1
@@ -326,47 +326,47 @@ print_treatment_profile() {
     awk -F'\t' -v label="$label" '
     NR==1 { next }
     {
-        soma=0
-        for (i=2; i<=NF; i++) soma += $i+0
-        total += soma
-        if (NR==2 || soma < min_s) min_s = soma
-        if (NR==2 || soma > max_s) max_s = soma
+        suma=0
+        for (i=2; i<=NF; i++) suma += $i+0
+        total += suma
+        if (NR==2 || suma < min_s) min_s = suma
+        if (NR==2 || suma > max_s) max_s = suma
         count++
     }
     END {
-        printf "  %-30s ASVs: %4d  soma_total: %10d  soma_min: %6d  soma_max: %8d\n",
+        printf "  %-30s ASVs: %4d  total_sum: %10d  min_sum: %6d  max_sum: %8d\n",
                label, count, total, min_s, max_s
     }
     ' "$file"
 }
 
 # =============================================================================
-# Início do pipeline — com log duplicado em arquivo
+# Pipeline start — with duplicated logging to file
 # =============================================================================
 log_file="${folder}/easy_net_$(date '+%Y%m%d_%H%M%S').log"
 
-# Redireciona stdout+stderr para terminal E para o log simultaneamente
+# Redirect stdout+stderr to terminal AND log simultaneously
 exec > >(tee -a "$log_file") 2>&1
 
 echo ""
 echo "============================================"
-echo "   Pipeline SparCC — Filtragem por Soma    "
+echo "   SparCC Pipeline — Sum-based Filtering    "
 echo "============================================"
-echo "  Log salvo em: $log_file"
-echo "  Data/hora   : $(date '+%Y-%m-%d %H:%M:%S')"
+echo "  Log saved in: $log_file"
+echo "  Date/time   : $(date '+%Y-%m-%d %H:%M:%S')"
 echo "--------------------------------------------"
-log_info "Pasta de entrada : $folder"
-log_info "Arquivos .txt    : ${#txt_files[@]}"
-$mode_abs && log_info "Modo             : --abs (varredura soma absoluta 1-10000)"
-$mode_abr && log_info "Modo             : --abr (varredura abundância relativa 0.0001%-1%)"
-[ -n "$min_seqs" ]   && log_info "Modo             : -n manual  | Soma mínima: $min_seqs reads"
-[ -n "$min_ab_pct" ] && log_info "Modo             : -ab manual | Abund. rel. mínima: ${min_ab_pct}%"
-log_info "Critério         : soma de todas as repetições por ASV"
+log_info "Input folder     : $folder"
+log_info ".txt files       : ${#txt_files[@]}"
+$mode_abs && log_info "Mode             : --abs (absolute sum sweep 1-10000)"
+$mode_abr && log_info "Mode             : --abr (relative abundance sweep 0.0001%-1%)"
+[ -n "$min_seqs" ]   && log_info "Mode             : -n manual  | Minimum sum: $min_seqs reads"
+[ -n "$min_ab_pct" ] && log_info "Mode             : -ab manual | Min. rel. abundance: ${min_ab_pct}%"
+log_info "Criterion        : sum of all replicates per ASV"
 echo ""
 
-# --- Perfil inicial dos tratamentos ---
+# --- Initial treatment profiles ---
 echo "--------------------------------------------"
-echo "  Perfil dos tratamentos (dados brutos):"
+echo "  Treatment profiles (raw data):"
 echo "--------------------------------------------"
 for file in "${txt_files[@]}"; do
     print_treatment_profile "$file" "$(basename "$file")"
@@ -374,19 +374,19 @@ done
 echo "--------------------------------------------"
 echo ""
 
-# Aplica patch no get_significant_pairs.py antes de qualquer coisa
-log_step "Verificando/patcheando get_significant_pairs.py"
+# Apply patch to get_significant_pairs.py before anything else
+log_step "Checking/patching get_significant_pairs.py"
 patch_get_significant_pairs
 
 # =============================================================================
-# LÓGICA DE FILTRAGEM
+# FILTERING LOGIC
 # =============================================================================
 filter_mode=""
 cutoff_value=""
 
 if $mode_abs; then
-    log_step "Modo --abs: varrendo soma absoluta de 1 a 10000 (passo 1)"
-    log_info "Meta: todos os tratamentos com <= ${max_asv} ASVs"
+    log_step "Mode --abs: sweeping absolute sum from 1 to 10000 (step 1)"
+    log_info "Goal: all treatments with <= ${max_asv} ASVs"
     echo ""
 
     best_cutoff=$(python3 - "${txt_files[@]}" << PYEOF
@@ -395,8 +395,8 @@ import sys, bisect
 files = sys.argv[1:]
 max_asv = ${max_asv}
 
-# Pré-calcular somas absolutas de cada arquivo (leitura única)
-somas = {}
+# Pre-calculate absolute sums for each file (single read)
+sumas = {}
 for fpath in files:
     vals = []
     with open(fpath) as fh:
@@ -407,18 +407,18 @@ for fpath in files:
             s = sum(float(x) for x in parts[1:] if x.strip())
             vals.append(int(s))
     vals.sort()
-    somas[fpath] = vals
-    soma_total = sum(vals)
+    sumas[fpath] = vals
+    suma_total = sum(vals)
     sys.stderr.write(
         f"  {fpath.split('/')[-1]}: {len(vals)} ASVs  "
-        f"soma_total={soma_total:,}  min={vals[0] if vals else 0}  max={vals[-1] if vals else 0}\n"
+        f"total_sum={suma_total:,}  min={vals[0] if vals else 0}  max={vals[-1] if vals else 0}\n"
     )
 
-# Varredura 1-10000 com busca binária
+# Sweep 1-10000 with binary search
 best = None
 for cut in range(1, 10001):
     ok = True
-    for vals in somas.values():
+    for vals in sumas.values():
         idx = bisect.bisect_left(vals, cut)
         if (len(vals) - idx) > max_asv:
             ok = False
@@ -432,19 +432,19 @@ PYEOF
 )
 
     if [ "$best_cutoff" = "-1" ] || [ -z "$best_cutoff" ]; then
-        log_error "Nenhum cutoff entre 1 e 10000 reduziu todos os tratamentos para <= ${max_asv} ASVs."
-        log_warn "Considere usar -n com valor > 10000 para cutoffs maiores."
+        log_error "No cutoff between 1 and 10000 reduced all treatments to <= ${max_asv} ASVs."
+        log_warn "Consider using -n with value > 10000 for higher cutoffs."
         exit 1
     fi
 
-    log_ok "Cutoff --abs selecionado: soma >= ${best_cutoff} reads (mesmo corte para todos os tratamentos)"
+    log_ok "Cutoff --abs selected: sum >= ${best_cutoff} reads (same cutoff for all treatments)"
     filter_mode="abs"
     cutoff_value="$best_cutoff"
 
 elif $mode_abr; then
-    log_step "Modo --abr: varredura por abundância relativa acumulada (0.01% a 100%, passo 0.01%)"
-    log_info "Lógica: ASVs ordenados do mais ao menos abundante, somando % até atingir o cutoff"
-    log_info "Meta: menor conjunto de ASVs (todos os tratamentos <= ${max_asv}) que cubra X% das reads"
+    log_step "Mode --abr: sweep by cumulative relative abundance (0.01% to 100%, step 0.01%)"
+    log_info "Logic: ASVs ordered from most to least abundant, summing % until reaching cutoff"
+    log_info "Goal: smallest set of ASVs (all treatments <= ${max_asv}) covering X% of reads"
     echo ""
 
     best_cutoff=$(python3 - "${txt_files[@]}" << PYEOF
@@ -453,8 +453,8 @@ import sys, bisect
 files = sys.argv[1:]
 max_asv = ${max_asv}
 
-# Pré-calcular curva de abundância acumulada por tratamento
-# ASVs ordenados do mais abundante ao menos; acum[n] = % acumulada dos top n+1 ASVs
+# Pre-calculate cumulative abundance curve per treatment
+# ASVs ordered from most to least abundant; acum[n] = cumulative % of top n+1 ASVs
 curvas = {}
 for fpath in files:
     vals = []
@@ -465,12 +465,12 @@ for fpath in files:
             parts = line.rstrip('\r\n').split('\t')
             s = sum(float(x) for x in parts[1:] if x.strip())
             vals.append(s)
-    soma_total = sum(vals)
-    if soma_total == 0:
-        sys.stderr.write(f"  AVISO: {fpath.split('/')[-1]} tem soma total = 0\n")
+    suma_total = sum(vals)
+    if suma_total == 0:
+        sys.stderr.write(f"  WARNING: {fpath.split('/')[-1]} has total sum = 0\n")
         curvas[fpath] = []
         continue
-    pcts = sorted((v / soma_total * 100 for v in vals), reverse=True)
+    pcts = sorted((v / suma_total * 100 for v in vals), reverse=True)
     acum = []
     s = 0.0
     for p in pcts:
@@ -479,13 +479,13 @@ for fpath in files:
     curvas[fpath] = acum
     sys.stderr.write(
         f"  {fpath.split('/')[-1]}: {len(acum)} ASVs  "
-        f"soma_total={int(soma_total):,}  "
-        f"abr_min={pcts[-1]:.6f}%  abr_max={pcts[0]:.4f}%\n"
+        f"total_sum={int(suma_total):,}  "
+        f"min_abr={pcts[-1]:.6f}%  max_abr={pcts[0]:.4f}%\n"
     )
 
-# Varredura do maior cutoff para o menor (0.01% a 100%, passo 0.01%)
-# Busca o cutoff mais restritivo (maior %) onde N_mantidos <= max_asv em todos
-# N_mantidos = bisect_left(acum, cutoff) + 1  (quantos ASVs cobrem >= cutoff%)
+# Sweep from highest to lowest cutoff (0.01% to 100%, step 0.01%)
+# Find the most restrictive cutoff (highest %) where N_retained <= max_asv in all
+# N_retained = bisect_left(acum, cutoff) + 1  (how many ASVs cover >= cutoff%)
 best = None
 step = 0.01
 cut = 100.0
@@ -505,56 +505,56 @@ while cut >= 0.0 - 1e-9:
 if best is None:
     print(-1)
 else:
-    # Imprimir resultado por tratamento no stderr (vai para o log)
-    sys.stderr.write(f"\n  Cutoff selecionado: {best}% acumulado\n")
+    # Print result per treatment to stderr (goes to log)
+    sys.stderr.write(f"\n  Cutoff selected: {best}% cumulative\n")
     for fpath, acum in curvas.items():
         idx = bisect.bisect_left(acum, best - 1e-9)
         n = idx + 1
         sys.stderr.write(
-            f"  {fpath.split('/')[-1]}: {n} ASVs mantidos  "
-            f"({acum[idx]:.4f}% acumulado real)\n"
+            f"  {fpath.split('/')[-1]}: {n} ASVs retained  "
+            f"({acum[idx]:.4f}% actual cumulative)\n"
         )
     print(best)
 PYEOF
 )
 
     if [ "$best_cutoff" = "-1" ] || [ -z "$best_cutoff" ]; then
-        log_error "Nenhum cutoff entre 0.01% e 100% deixou todos os tratamentos com <= ${max_asv} ASVs."
-        log_warn "Considere aumentar max_asv no script."
+        log_error "No cutoff between 0.01% and 100% left all treatments with <= ${max_asv} ASVs."
+        log_warn "Consider increasing max_asv in the script."
         exit 1
     fi
 
-    log_ok "Cutoff --abr selecionado: ${best_cutoff}% de abundância acumulada (mesmo corte para todos)"
+    log_ok "Cutoff --abr selected: ${best_cutoff}% cumulative abundance (same cutoff for all)"
     filter_mode="rel_acum"
     cutoff_value="$best_cutoff"
 
 elif [ -n "$min_ab_pct" ]; then
-    log_step "Modo -ab manual: abundância relativa mínima = ${min_ab_pct}% da soma total do tratamento"
+    log_step "Mode -ab manual: minimum relative abundance = ${min_ab_pct}% of treatment total sum"
     filter_mode="rel"
     cutoff_value="$min_ab_pct"
 
 elif [ -n "$min_seqs" ]; then
-    log_step "Modo -n manual: soma mínima de reads = ${min_seqs}"
+    log_step "Mode -n manual: minimum read sum = ${min_seqs}"
     filter_mode="abs"
     cutoff_value="$min_seqs"
 
 else
-    log_warn "Nenhum modo de filtragem especificado (--abs, --abr, -n ou -ab). Prosseguindo sem filtragem."
+    log_warn "No filtering mode specified (--abs, --abr, -n or -ab). Proceeding without filtering."
     filter_mode="none"
 fi
 
 # =============================================================================
-# APLICAR FILTRAGEM + RELATÓRIO DE % MANTIDOS
+# APPLY FILTERING + REPORT % RETAINED
 # =============================================================================
 filtered_folder="${folder}/filtered"
 mkdir -p "$filtered_folder"
 
-log_step "Aplicando filtros e gravando em: ${filtered_folder}/"
+log_step "Applying filters and saving to: ${filtered_folder}/"
 echo ""
 
-# Cabeçalho do relatório
+# Report header
 echo "------------------------------------------------------------"
-printf "  %-30s %6s %6s %8s\n" "Arquivo" "Antes" "Depois" "Mantido"
+printf "  %-30s %6s %6s %8s\n" "File" "Before" "After" "Retained"
 echo "------------------------------------------------------------"
 
 for file in "${txt_files[@]}"; do
@@ -576,12 +576,12 @@ done
 
 echo "------------------------------------------------------------"
 echo ""
-log_ok "Filtragem concluída. Arquivos em: ${filtered_folder}/"
+log_ok "Filtering completed. Files in: ${filtered_folder}/"
 
 # =============================================================================
 # SPARCC
 # =============================================================================
-log_step "Iniciando análises SparCC"
+log_step "Starting SparCC analyses"
 echo ""
 
 cd "$filtered_folder" || exit 1
@@ -591,7 +591,7 @@ filtered_files=(*.txt)
 shopt -u nullglob
 
 if [ ${#filtered_files[@]} -eq 0 ]; then
-    log_error "Nenhum arquivo .txt na pasta filtered/."
+    log_error "No .txt files in filtered/ folder."
     exit 1
 fi
 
@@ -604,47 +604,47 @@ for file in "${filtered_files[@]}"; do
     base_name="${file%.txt}"
 
     echo ""
-    echo "--- [$count/$total] Processando: $file ---"
+    echo "--- [$count/$total] Processing: $file ---"
 
     net_dir="${base_name}_net"
     mkdir -p "${net_dir}/perm"
     mkdir -p "${net_dir}/pvalues"
 
-    # --- SparCC principal ---
-    log_info "Calculando correlações SparCC..."
+    # --- Main SparCC ---
+    log_info "Calculating SparCC correlations..."
     python "${SPARCC_PATH}/SparCC.py" "${file}" \
         --cor_file="${net_dir}/cor_sparcc.out"
     if [ $? -ne 0 ]; then
-        log_error "SparCC.py falhou em: $file — pulando."
+        log_error "SparCC.py failed on: $file — skipping."
         failed_files+=("$file")
         continue
     fi
 
-    # Verifica se o arquivo de saída tem dados reais
+    # Check if output file has real data
     if ! check_cor_file "${net_dir}/cor_sparcc.out"; then
-        log_error "cor_sparcc.out está vazio (sem valores numéricos) para: $file"
-        log_warn "Possível causa: formato incorreto da tabela de entrada (separador, header, etc.)"
-        log_warn "Verifique: head -2 ${file} | cat -A"
+        log_error "cor_sparcc.out is empty (no numeric values) for: $file"
+        log_warn "Possible cause: incorrect input table format (separator, header, etc.)"
+        log_warn "Check: head -2 ${file} | cat -A"
         failed_files+=("$file")
         continue
     fi
-    log_ok "Correlações calculadas: ${net_dir}/cor_sparcc.out"
+    log_ok "Correlations calculated: ${net_dir}/cor_sparcc.out"
 
     # --- Bootstraps ---
-    log_info "Gerando 100 permutações..."
+    log_info "Generating 100 permutations..."
     python "${SPARCC_PATH}/MakeBootstraps.py" "${file}" \
         -n 100 \
         -t permutation_#.txt \
         -p "${net_dir}/perm/"
     if [ $? -ne 0 ]; then
-        log_error "MakeBootstraps.py falhou em: $file — pulando."
+        log_error "MakeBootstraps.py failed on: $file — skipping."
         failed_files+=("$file")
         continue
     fi
-    log_ok "Permutações geradas em: ${net_dir}/perm/"
+    log_ok "Permutations generated in: ${net_dir}/perm/"
 
-    # --- SparCC nas permutações ---
-    log_info "Calculando SparCC para cada permutação (0–99)..."
+    # --- SparCC on permutations ---
+    log_info "Calculating SparCC for each permutation (0–99)..."
     perm_failed=0
     for f in $(seq 0 99); do
         python "${SPARCC_PATH}/SparCC.py" \
@@ -652,17 +652,17 @@ for file in "${filtered_files[@]}"; do
             -i 100 \
             --cor_file="${net_dir}/pvalues/perm_cor${f}.txt"
         if [ $? -ne 0 ]; then
-            log_warn "SparCC falhou na permutação ${f} — continuando."
+            log_warn "SparCC failed on permutation ${f} — continuing."
             perm_failed=$((perm_failed+1))
         fi
     done
     if [ $perm_failed -gt 0 ]; then
-        log_warn "${perm_failed}/100 permutações falharam para: $file"
+        log_warn "${perm_failed}/100 permutations failed for: $file"
     fi
-    log_ok "SparCC permutacional concluído."
+    log_ok "Permutation SparCC completed."
 
     # --- PseudoPvals ---
-    log_info "Calculando pseudo p-valores (two-sided)..."
+    log_info "Calculating pseudo p-values (two-sided)..."
     python "${SPARCC_PATH}/PseudoPvals.py" \
         "${net_dir}/cor_sparcc.out" \
         "${net_dir}/pvalues/perm_cor#.txt" \
@@ -670,54 +670,54 @@ for file in "${filtered_files[@]}"; do
         -o "${net_dir}/pvals_two_sided.txt" \
         -t two_sided
     if [ $? -ne 0 ]; then
-        log_error "PseudoPvals.py falhou em: $file — pulando."
+        log_error "PseudoPvals.py failed on: $file — skipping."
         failed_files+=("$file")
         continue
     fi
-    log_ok "P-valores: ${net_dir}/pvals_two_sided.txt"
+    log_ok "P-values: ${net_dir}/pvals_two_sided.txt"
 
-    # --- Pares significativos ---
-    log_info "Extraindo pares significativos..."
+    # --- Significant pairs ---
+    log_info "Extracting significant pairs..."
     cd "${net_dir}" || exit 1
     python "${SPARCC_PATH}/get_significant_pairs.py"
     if [ $? -ne 0 ]; then
-        log_error "get_significant_pairs.py falhou em: ${net_dir}/"
-        log_warn "Verifique o formato de cor_sparcc.out e pvals_two_sided.txt"
+        log_error "get_significant_pairs.py failed in: ${net_dir}/"
+        log_warn "Check the format of cor_sparcc.out and pvals_two_sided.txt"
         cd ..
         failed_files+=("$file")
         continue
     fi
-    log_ok "Pares significativos extraídos em: ${net_dir}/"
+    log_ok "Significant pairs extracted in: ${net_dir}/"
     cd ..
 
 done
 
 # =============================================================================
-# Sumário final
+# Final summary
 # =============================================================================
 echo ""
 echo "============================================"
 if [ ${#failed_files[@]} -eq 0 ]; then
-    log_ok "Pipeline concluído com sucesso! ($total/$total arquivos)"
+    log_ok "Pipeline completed successfully! ($total/$total files)"
 else
-    log_warn "Pipeline concluído com erros."
-    log_warn "Arquivos que falharam (${#failed_files[@]}/${total}):"
+    log_warn "Pipeline completed with errors."
+    log_warn "Files that failed (${#failed_files[@]}/${total}):"
     for f in "${failed_files[@]}"; do
         echo "    - $f"
     done
 fi
 
-# Perfil dos tratamentos após filtragem
+# Treatment profiles after filtering
 echo ""
 echo "--------------------------------------------"
-echo "  Perfil dos tratamentos (após filtragem):"
+echo "  Treatment profiles (after filtering):"
 echo "--------------------------------------------"
 for file in "${filtered_folder}"/*.txt; do
     print_treatment_profile "$file" "$(basename "$file")"
 done
 echo "--------------------------------------------"
 echo ""
-echo "  Log completo salvo em:"
+echo "  Complete log saved in:"
 echo "  $log_file"
 echo "============================================"
 echo ""
