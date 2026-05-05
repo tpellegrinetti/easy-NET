@@ -35,7 +35,7 @@
 #   - O SparCC deve estar em: /Dados/bioinformatic_tools/SparCC
 # =============================================================================
 
-SPARCC_PATH="/home/thierry_bioinfo/works/bioinformatics_tools/SparCC/"
+SPARCC_PATH="/home/thierry_bioinfo/works/bioinformatics_tools/SparCC/" ####CHANGE HERE YORUR SPARCC PATH
 
 log_info()    { echo "[INFO]  $*"; }
 log_ok()      { echo "[OK]    $*"; }
