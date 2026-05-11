@@ -1,5 +1,7 @@
 
-
+<p align="center">
+  <img src="easy_net.jpeg" width="900">
+</p>
 
 # easy_net.sh
 
