@@ -1,8 +1,7 @@
-# easy-NET
+![easy_net](https://github.com/user-attachments/assets/4a4cd1a8-bb1d-43bf-9397-28a56a7ff7c9)# easy-NET
 
-<p align="center">
-  <img src="easy-NET.jpg" width="300"/>
-</p>
+![Uploading easy_net{"detail":"Invalid signature or expired URL"}.png…]()
+
 
 # easy_net.sh
 
