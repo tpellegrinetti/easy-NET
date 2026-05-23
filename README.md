@@ -366,16 +366,16 @@ Contributions are welcome! Please:
 
 ## License
 
-[Specify your license here - e.g., MIT, GPL-3.0, etc.]
+
 
 ## Contact
 
-[Your contact information]
+tpellegrinetti@usp.br
 
 ## Acknowledgments
 
 - **SparCC developers**: Jonathan Friedman and Eric Alm
-- **Contributors**: [List any contributors]
+- **Contributors**: 
 
 ---
 
